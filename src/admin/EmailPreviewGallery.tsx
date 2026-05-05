@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
-  Mail, Eye, ChevronRight, FileText, Truck, FileSignature, CreditCard,
-  Code2, Info, AlertCircle,
+  Mail, Eye, ChevronRight, FileText, Truck, FileSignature,
+  Code2, Info, AlertCircle, Zap, Clock,
 } from 'lucide-react';
 import {
   buildPaymentConfirmedHtml,
@@ -84,19 +84,35 @@ const SAMPLE_SIGNATURE_DATA_URL =
 function buildTemplates(): TemplateMeta[] {
   return [
     {
-      id: 'payment-request',
-      title: 'Solicitud de pago',
-      subtitle: 'Cuando el admin contacta al cliente con el pedido confirmado',
+      id: 'payment-request-immediate',
+      title: 'Solicitud de pago — Entrega inmediata',
+      subtitle: 'Producto en stock: paga y se entrega de inmediato',
       subject: 'Confirmación de pedido y solicitud de pago - Avanti México',
-      trigger: 'Tab Prepedidos → seleccionar pedido → "Enviar solicitud"',
+      trigger: 'Tab Prepedidos → seleccionar pedido → modalidad "Entrega inmediata" → "Enviar solicitud"',
       recipients: 'Cliente + cc a contacto@ y pedidos@avantimexico.com',
       edits: [
         'Datos bancarios (CLABE, banco, titular)',
-        'Pasos a seguir (fechas: actualmente "30 abril" depósito, "8 mayo" entrega)',
-        'Banner final amber con copy de cierre',
+        'Modalidad seleccionable en el mailer: Entrega inmediata',
+        'Banner final: ⚡ Producto en stock',
       ],
-      buildHtml: () => buildDefaultPaymentHtml(SAMPLE_PREORDER, buildDefaultBankInfo(SAMPLE_ORDER_NUMBER)),
-      icon: CreditCard,
+      buildHtml: () => buildDefaultPaymentHtml(SAMPLE_PREORDER, buildDefaultBankInfo(SAMPLE_ORDER_NUMBER), 'immediate'),
+      icon: Zap,
+      accent: 'amber',
+    },
+    {
+      id: 'payment-request-scheduled',
+      title: 'Solicitud de pago — Aviso posterior',
+      subtitle: 'Producto en preparación: paga y avisamos cuándo retirarlo',
+      subject: 'Confirmación de pedido y solicitud de pago - Avanti México',
+      trigger: 'Tab Prepedidos → seleccionar pedido → modalidad "Aviso posterior" → "Enviar solicitud"',
+      recipients: 'Cliente + cc a contacto@ y pedidos@avantimexico.com',
+      edits: [
+        'Datos bancarios (CLABE, banco, titular)',
+        'Modalidad seleccionable en el mailer: Aviso posterior',
+        'Banner final: ⏳ Producto en preparación',
+      ],
+      buildHtml: () => buildDefaultPaymentHtml(SAMPLE_PREORDER, buildDefaultBankInfo(SAMPLE_ORDER_NUMBER), 'scheduled'),
+      icon: Clock,
       accent: 'amber',
     },
     {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, Mail, Eye, Code2, Loader2, CheckCircle2, AlertCircle, CreditCard, X } from 'lucide-react';
+import { Send, Mail, Eye, Code2, Loader2, CheckCircle2, AlertCircle, CreditCard, X, Zap, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Preorder } from './PreordersTable';
 
@@ -12,7 +12,69 @@ function formatMXN(n: number): string {
   return n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
 }
 
-export function buildDefaultPaymentHtml(preorder: Preorder, bankInfo: string): string {
+// ============================================================================
+// Payment modes — configuración del bloque "Pasos a seguir" + mensaje de cierre
+// ============================================================================
+//
+// El admin elige cuál usar al enviar la solicitud:
+//   immediate → producto en stock, se entrega apenas confirmemos el pago
+//   scheduled → producto en preparación, avisamos por correo cuándo retirarlo
+//
+// El resto del template (header, items, datos bancarios, footer) es idéntico.
+
+export type PaymentMode = 'immediate' | 'scheduled';
+
+interface PaymentModeContent {
+  /** Texto legible mostrado en el selector y la galería */
+  label: string;
+  /** Subtítulo / contexto en la galería */
+  description: string;
+  /** Lista de pasos (HTML inline para preservar bold/links) */
+  steps: string[];
+  /** Banner amber final */
+  closingBadge: string;
+  closingNote: string;
+}
+
+const PAYMENT_MODES: Record<PaymentMode, PaymentModeContent> = {
+  immediate: {
+    label: 'Pago + entrega inmediata',
+    description: 'Producto en stock — apenas confirmemos pago se entrega.',
+    steps: [
+      'Realiza tu depósito a la cuenta indicada arriba y envía tu comprobante al email <a href="mailto:pedidos@avantimexico.com" style="color:#d97706;text-decoration:none;">pedidos@avantimexico.com</a>.',
+      'En cuanto recibamos tu comprobante confirmaremos vía email tu transferencia (normalmente en <strong style="color:#d97706;">pocas horas hábiles</strong>).',
+      'Si requieres <strong style="color:#d97706;">factura</strong>, adjunta tu constancia de situación fiscal vigente y todos tus datos fiscales junto con el comprobante.',
+      '<strong style="color:#d97706;">Tu producto está en stock</strong> — apenas validemos tu pago podrás pasar a recogerlo de inmediato.',
+      'Dirección de retiro: <strong style="color:#d97706;">Calle 28 de diciembre #23, Col. Emiliano Zapata, Coyoacán, CDMX, CP 04815</strong>. O coordina recolección por Uber/Didi avisando previamente al WhatsApp <a href="https://wa.me/5215523185134" style="color:#d97706;text-decoration:none;">55 2318 5134</a>. Horario lunes a jueves de 9 a 17 hrs. <em style="color:#9ca3af;">El costo del envío no está incluido.</em>',
+    ],
+    closingBadge: '⚡ Producto en stock — entrega inmediata tras confirmación de pago.',
+    closingNote: 'Una vez confirmado tu pago, tu pedido queda listo para recolección. ¡Gracias por tu compra!',
+  },
+  scheduled: {
+    label: 'Pago + aviso posterior',
+    description: 'Producto en preparación — avisamos por correo cuándo retirarlo.',
+    steps: [
+      'Realiza tu depósito a la cuenta indicada arriba y envía tu comprobante al email <a href="mailto:pedidos@avantimexico.com" style="color:#d97706;text-decoration:none;">pedidos@avantimexico.com</a>.',
+      'En cuanto recibamos tu comprobante confirmaremos vía email tu transferencia (normalmente en <strong style="color:#d97706;">pocas horas hábiles</strong>).',
+      'Si requieres <strong style="color:#d97706;">factura</strong>, adjunta tu constancia de situación fiscal vigente y todos tus datos fiscales junto con el comprobante.',
+      '<strong style="color:#d97706;">Tu producto está en preparación</strong> — apenas esté listo te enviaremos un segundo correo indicándote el <strong style="color:#d97706;">día y horario</strong> en que puedes pasar a recogerlo.',
+      'Cuando recibas el aviso, podrás recoger en <strong style="color:#d97706;">Calle 28 de diciembre #23, Col. Emiliano Zapata, Coyoacán, CDMX, CP 04815</strong>, o coordinar recolección por Uber/Didi avisando previamente al WhatsApp <a href="https://wa.me/5215523185134" style="color:#d97706;text-decoration:none;">55 2318 5134</a>. Horario lunes a jueves de 9 a 17 hrs. <em style="color:#9ca3af;">El costo del envío no está incluido.</em>',
+    ],
+    closingBadge: '⏳ Producto en preparación — te avisaremos cuándo recogerlo.',
+    closingNote: 'Una vez confirmado tu pago, te avisaremos por correo apenas tu producto esté listo. ¡Gracias por tu compra!',
+  },
+};
+
+export function paymentModes(): Array<{ id: PaymentMode } & PaymentModeContent> {
+  return (Object.keys(PAYMENT_MODES) as PaymentMode[]).map((id) => ({ id, ...PAYMENT_MODES[id] }));
+}
+
+export function buildDefaultPaymentHtml(
+  preorder: Preorder,
+  bankInfo: string,
+  mode: PaymentMode = 'immediate'
+): string {
+  const modeCfg = PAYMENT_MODES[mode];
   const rows = preorder.items
     .map(
       (item) => `
@@ -103,36 +165,18 @@ export function buildDefaultPaymentHtml(preorder: Preorder, bankInfo: string): s
                 <tr>
                   <td style="padding:16px 20px;">
                     <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;vertical-align:top;">
-                          <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;flex-shrink:0;">1</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">Realiza tu depósito antes del <strong style="color:#d97706;">30 de abril, tienes hasta las 16:00 para entrar en la preventa</strong> y envía tu comprobante al email <a href="mailto:pedidos@avantimexico.com" style="color:#d97706;text-decoration:none;">pedidos@avantimexico.com</a></span>
+                      ${modeCfg.steps
+                        .map((stepHtml, i) => {
+                          const isLast = i === modeCfg.steps.length - 1;
+                          const borderStyle = isLast ? '' : 'border-bottom:1px solid #1a1a1a;';
+                          return `<tr>
+                        <td style="padding:10px 0;${borderStyle}vertical-align:top;">
+                          <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;flex-shrink:0;">${i + 1}</span>
+                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">${stepHtml}</span>
                         </td>
-                      </tr>
-                      <tr>
-                        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;vertical-align:top;">
-                          <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;flex-shrink:0;">2</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">En un lapso máximo de <strong style="color:#d97706;">2 días hábiles</strong> confirmaremos vía email tu transferencia.</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;vertical-align:top;">
-                          <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;flex-shrink:0;">3</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">En caso de que requieras <strong style="color:#d97706;">factura</strong>, junto con tu comprobante de depósito adjunta tu constancia de situación fiscal vigente y todos tus datos fiscales para emitir tu factura.</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;vertical-align:top;">
-                          <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;flex-shrink:0;">4</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">El lanzamiento oficial y entrega de tu producto es el día <strong style="color:#d97706;">8 de mayo</strong>.</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding:10px 0;vertical-align:top;">
-                          <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;flex-shrink:0;">5</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">Te esperamos en <strong style="color:#d97706;">Calle 28 de diciembre #23, Col. Emiliano Zapata, Coyoacán, CDMX, CP 04815</strong>. O si lo prefieres, puedes coordinar tu recolección mandando un Uber o Didi y notificando previamente al número <a href="https://wa.me/5215523185134" style="color:#d97706;text-decoration:none;">55 2318 5134</a> vía WhatsApp para coordinar tu entrega en horario laboral de lunes a jueves de 9 a 17 hrs. <em style="color:#9ca3af;">El costo del envío no está incluido.</em></span>
-                        </td>
-                      </tr>
+                      </tr>`;
+                        })
+                        .join('')}
                     </table>
                   </td>
                 </tr>
@@ -145,13 +189,10 @@ export function buildDefaultPaymentHtml(preorder: Preorder, bankInfo: string): s
                 <tr>
                   <td style="padding:16px 20px;text-align:center;">
                     <p style="color:#000;font-size:13px;font-weight:700;margin:0 0 6px 0;">
-                      🏆 Disfruta de coleccionar el Álbum del mundial antes que nadie.
+                      ${modeCfg.closingBadge}
                     </p>
                     <p style="color:#000;font-size:12px;font-weight:500;margin:0;">
-                      Podrás seguir generando pedidos posteriormente con la misma dinámica, solamente te pedimos confirmar existencias al número de WhatsApp.
-                    </p>
-                    <p style="color:#000;font-size:13px;font-weight:700;margin:10px 0 0 0;">
-                      ¡Gracias por tu compra!
+                      ${modeCfg.closingNote}
                     </p>
                   </td>
                 </tr>
@@ -189,6 +230,7 @@ export default function PreorderMailer({ preorder, onEmailSent }: PreorderMailer
   const [bankInfo, setBankInfo] = useState(() =>
     preorder ? buildDefaultBankInfo(preorder.order_number) : ''
   );
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('immediate');
   const [previewMode, setPreviewMode] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -210,7 +252,7 @@ export default function PreorderMailer({ preorder, onEmailSent }: PreorderMailer
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No autenticado');
 
-      const html = buildDefaultPaymentHtml(preorder, bankInfo);
+      const html = buildDefaultPaymentHtml(preorder, bankInfo, paymentMode);
 
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-preorder-payment`;
 
@@ -263,7 +305,7 @@ export default function PreorderMailer({ preorder, onEmailSent }: PreorderMailer
     );
   }
 
-  const previewHtml = buildDefaultPaymentHtml(preorder, bankInfo);
+  const previewHtml = buildDefaultPaymentHtml(preorder, bankInfo, paymentMode);
 
   return (
     <div className="bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden">
@@ -303,6 +345,48 @@ export default function PreorderMailer({ preorder, onEmailSent }: PreorderMailer
             onChange={(e) => setSubject(e.target.value)}
             className="w-full px-4 py-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 transition-colors text-sm"
           />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-400 mb-2 block">Modalidad de entrega</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMode('immediate')}
+              className={`p-3 rounded-lg border text-left transition-all ${
+                paymentMode === 'immediate'
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                  : 'bg-black border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Zap size={14} className={paymentMode === 'immediate' ? 'text-amber-400' : 'text-gray-500'} />
+                <span className="text-xs font-bold tracking-wide">Entrega inmediata</span>
+              </div>
+              <p className="text-[11px] leading-tight opacity-80">
+                Producto en stock — apenas confirmemos el pago se entrega.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPaymentMode('scheduled')}
+              className={`p-3 rounded-lg border text-left transition-all ${
+                paymentMode === 'scheduled'
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                  : 'bg-black border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Clock size={14} className={paymentMode === 'scheduled' ? 'text-amber-400' : 'text-gray-500'} />
+                <span className="text-xs font-bold tracking-wide">Aviso posterior</span>
+              </div>
+              <p className="text-[11px] leading-tight opacity-80">
+                Producto en preparación — avisamos por correo cuándo retirarlo.
+              </p>
+            </button>
+          </div>
+          <p className="text-gray-700 text-xs mt-1">El bloque de "Pasos a seguir" del correo cambia según la modalidad elegida.</p>
         </div>
 
         <div>
