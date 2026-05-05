@@ -1,5 +1,5 @@
-import { ArrowLeft, ArrowRight, Minus, Plus, Package, ShoppingCart } from 'lucide-react';
-import { products } from './products';
+import { ArrowLeft, ArrowRight, Minus, Plus, Package, ShoppingCart, Loader2, AlertCircle } from 'lucide-react';
+import { useProducts } from './products';
 import type { OrderItem } from './types';
 
 interface ProductsStepProps {
@@ -14,12 +14,15 @@ function formatMXN(n: number): string {
 }
 
 export default function ProductsStep({ items, onChange, onBack, onNext }: ProductsStepProps) {
+  const { products, loading, error } = useProducts();
+
   function getQty(productId: string): number {
     return items.find((i) => i.productId === productId)?.quantity ?? 0;
   }
 
   function setQty(productId: string, qty: number) {
-    const product = products.find((p) => p.id === productId)!;
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
     const clamped = Math.max(0, qty);
 
     if (clamped === 0) {
@@ -60,8 +63,33 @@ export default function ProductsStep({ items, onChange, onBack, onNext }: Produc
         Elige la cantidad de cada producto. Los precios mostrados son precio distribuidor (20% de descuento sobre precio al publico).
       </p>
 
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+          <Loader2 size={32} className="animate-spin mb-3 text-amber-400" />
+          <p className="text-sm">Cargando catálogo...</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 mb-8 flex items-start gap-3">
+          <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-red-400 font-semibold text-sm mb-1">No fue posible cargar el catálogo</p>
+            <p className="text-red-300/70 text-xs">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && products.length === 0 && (
+        <div className="bg-gray-950 border border-gray-800 rounded-2xl p-12 mb-8 text-center text-gray-500">
+          <Package size={32} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No hay productos disponibles en este momento.</p>
+          <p className="text-xs text-gray-600 mt-1">Vuelve a intentarlo más tarde o contacta a un asesor.</p>
+        </div>
+      )}
+
       <div className="space-y-4 mb-8">
-        {products.map((product) => {
+        {!loading && !error && products.map((product) => {
           const qty = getQty(product.id);
           const lineTotal = qty * product.clientPrice;
 
