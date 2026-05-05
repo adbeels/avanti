@@ -17,8 +17,9 @@ export interface Product {
 // Porcentaje de descuento sobre el precio al público (rate distribuidor).
 const DISTRIBUTOR_DISCOUNT_RATE = 0.20;
 
-// Canales soportados por la página /pedido*. Mantenemos la lista corta y
-// validada en BD (ver constraint products_sales_channel_check).
+// Canales soportados por la página /pedido*. Cada producto puede vivir en
+// uno o varios canales (ver columna products.sales_channels TEXT[] en BD,
+// validada por constraint products_sales_channels_check).
 export type SalesChannel = 'general' | 'caja';
 
 interface ProductRow {
@@ -27,7 +28,7 @@ interface ProductRow {
   description: string | null;
   unit_price: number | string;
   active: boolean;
-  sales_channel: SalesChannel;
+  sales_channels: SalesChannel[];
 }
 
 function mapRow(row: ProductRow): Product {
@@ -67,9 +68,12 @@ export function useProducts(channel: SalesChannel = 'general'): UseProductsResul
       setError(null);
       const { data, error: dbError } = await supabase
         .from('products')
-        .select('id, name, description, unit_price, active, sales_channel')
+        .select('id, name, description, unit_price, active, sales_channels')
         .eq('active', true)
-        .eq('sales_channel', channel)
+        // sales_channels @> ARRAY[channel] — productos que incluyen el canal
+        // solicitado en su lista de canales. Albums viven en ['general','caja']
+        // y aparecen tanto en /pedido como en /pedidoCaja.
+        .contains('sales_channels', [channel])
         .order('unit_price', { ascending: true });
 
       if (cancelled) return;

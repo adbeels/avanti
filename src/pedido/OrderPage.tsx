@@ -26,10 +26,10 @@ const CHANNEL_COPY: Record<SalesChannel, ChannelCopy> = {
       'Productos Panini con precio preferencial de distribuidor, los precios expresados deben manejarse de manera confidencial ya que no son precios de venta al público y son excusivos para socios comerciales y amigos de Avanti México, Sales & Operations .',
   },
   caja: {
-    badge: 'Cajas Panini Mundial FIFA 2026',
-    titleHighlight: 'prepedido de cajas',
+    badge: 'Canal Minorista — Mundial FIFA 2026',
+    titleHighlight: 'pedido minorista',
     description:
-      'Cajas Panini con precio preferencial de distribuidor. Canal exclusivo para socios comerciales con punto de venta. Los precios mostrados deben manejarse de forma confidencial.',
+      'Catálogo minorista de productos Panini Mundial FIFA 2026 (álbumes y cajas). Precios mostrados con descuento preferencial sobre el precio al público. Canal pensado para tiendas con punto de venta y compras por unidad.',
   },
 };
 
