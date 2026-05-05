@@ -239,7 +239,7 @@ export function buildPaymentConfirmedHtml(preorder: {
                       <tr>
                         <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;vertical-align:top;">
                           <span style="display:inline-block;background-color:#16a34a;color:#fff;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;">3</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">Si prefieres envio, coordina tu recoleccion mandando un Uber o Didi y notifica previamente al <a href="https://wa.me/5215523185134" style="color:#d97706;text-decoration:none;">55 2318 5134</a> via WhatsApp. <em style="color:#9ca3af;">El costo del envio no esta incluido.</em></span>
+                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;">Si prefieres envio, coordina tu recoleccion mandando un Uber o Didi y notifica previamente al <a href="https://wa.me/5215513228756" style="color:#d97706;text-decoration:none;">55 1322 8756</a> via WhatsApp. <em style="color:#9ca3af;">El costo del envio no esta incluido.</em></span>
                         </td>
                       </tr>
                       <tr>
@@ -392,13 +392,13 @@ export function buildDeliveryReadyHtml(preorder: {
                       <tr>
                         <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;vertical-align:top;">
                           <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;">2</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;"><strong style="color:#d97706;">Coordinar Uber o Didi</strong>: envia un mensaje al <a href="https://wa.me/5215523185134" style="color:#d97706;text-decoration:none;">55 2318 5134</a> via WhatsApp para coordinar la entrega al mensajero. <em style="color:#9ca3af;">El costo del envio corre por tu cuenta.</em></span>
+                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;"><strong style="color:#d97706;">Coordinar Uber o Didi</strong>: envia un mensaje al <a href="https://wa.me/5215513228756" style="color:#d97706;text-decoration:none;">55 1322 8756</a> via WhatsApp para coordinar la entrega al mensajero. <em style="color:#9ca3af;">El costo del envio corre por tu cuenta.</em></span>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding:10px 0;vertical-align:top;">
                           <span style="display:inline-block;background-color:#d97706;color:#000;font-size:11px;font-weight:800;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;margin-right:10px;">3</span>
-                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;"><strong style="color:#d97706;">Mayoristas</strong>: si acordamos contigo una entrega especial, nos pondremos en contacto al WhatsApp <a href="https://wa.me/5215523185134" style="color:#d97706;text-decoration:none;">55 2318 5134</a> para coordinar fecha y direccion sin costo.</span>
+                          <span style="color:#e5e7eb;font-size:13px;line-height:1.6;"><strong style="color:#d97706;">Mayoristas</strong>: si acordamos contigo una entrega especial, nos pondremos en contacto al WhatsApp <a href="https://wa.me/5215513228756" style="color:#d97706;text-decoration:none;">55 1322 8756</a> para coordinar fecha y direccion sin costo.</span>
                         </td>
                       </tr>
                     </table>
