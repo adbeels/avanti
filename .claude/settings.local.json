@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(node ./vite-ftp-deploy/install.mjs)",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__list_projects",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__list_tables",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__execute_sql",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__apply_migration",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__deploy_edge_function",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__list_extensions",
+      "mcp__c1f89071-642e-47b2-9b19-cc87abcd2a9b__get_advisors",
+      "Bash(node --check /c/Avanti/vite-zip-deploy/install.mjs)",
+      "Bash(node --check /c/Avanti/vite-zip-deploy/scripts/deploy-build.mjs)",
+      "Read(//c/tmp/**)",
+      "Bash(python3)",
+      "Bash(cp \"C:\\\\Users\\\\adbee\\\\OneDrive - GRAFICO SIETE\\\\crucePedidos.xlsx\" /tmp/cruce.xlsx)",
+      "Read(//tmp/**)",
+      "Bash(cp \"C:\\\\Users\\\\adbee\\\\OneDrive - GRAFICO SIETE\\\\crucePedidos.xlsx\" \"C:\\\\Users\\\\adbee\\\\AppData\\\\Local\\\\Temp\\\\cruce.xlsx\")",
+      "Read(//c/Users/adbee/AppData/Local/Temp/**)",
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "Bash(git add *)"
+    ]
+  }
+}
