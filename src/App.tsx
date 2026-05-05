@@ -14,7 +14,9 @@ import { useTheme } from './hooks/useTheme';
 function App() {
   const { theme, toggleTheme } = useTheme();
   const params = new URLSearchParams(window.location.search);
-  const pathname = window.location.pathname;
+  // Normaliza pathname: quita trailing slash (excepto en root "/") para tolerar
+  // los redirects 301 que CloudFront/Amplify hacen sobre paths sin extensión.
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
   const isAdmin = params.has('admin');
   const isMundial =
     params.has('distribuidor-album-mundial-2026') ||
