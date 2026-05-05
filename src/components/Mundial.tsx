@@ -9,7 +9,7 @@ export default function Mundial() {
         <div className="text-center mb-8">
           <div className="mb-3 flex justify-center">
             <div className="bg-white p-6 rounded-2xl shadow-2xl shadow-amber-500/20 inline-block">
-              <img src="/mundial_2026.png" alt="Mundial 2026" className="w-56 h-auto" />
+              <img src="/albumCaja.webp" alt="Álbum y caja Panini Mundial 2026" className="w-56 h-auto" />
             </div>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">

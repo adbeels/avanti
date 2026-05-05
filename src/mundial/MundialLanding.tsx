@@ -28,11 +28,11 @@ export default function MundialLanding() {
     setMeta('keywords', 'distribuidor autorizado álbum Copa del Mundo FIFA 2026, álbum Panini Mundial 2026 México, ser distribuidor Panini México, vender álbum Copa del Mundo, AVANTI distribuidor Panini', true);
     setMeta('og:title', 'Conviértete en distribuidor autorizado | Álbum Copa del Mundo FIFA 2026');
     setMeta('og:description', 'Conviértete en distribuidor autorizado del Álbum Copa del Mundo FIFA 2026 de Panini. Mayoreo, retail y canal moderno en México. Regístrate con AVANTI y recibe información de pedidos.');
-    setMeta('og:image', 'https://avantimexico.com/mundial_2026.png');
+    setMeta('og:image', 'https://avantimexico.com/albumCaja.webp');
     setMeta('og:url', 'https://avantimexico.com/?distribuidor-album-mundial-2026');
     setMeta('twitter:title', 'Conviértete en distribuidor autorizado | Álbum Copa del Mundo FIFA 2026', true);
     setMeta('twitter:description', 'Distribuidor autorizado del Álbum Copa del Mundo FIFA 2026 de Panini en México. Mayoreo, retail y canal moderno con AVANTI.', true);
-    setMeta('twitter:image', 'https://avantimexico.com/mundial_2026.png', true);
+    setMeta('twitter:image', 'https://avantimexico.com/albumCaja.webp', true);
 
     const schemaScript = document.createElement('script');
     schemaScript.type = 'application/ld+json';
