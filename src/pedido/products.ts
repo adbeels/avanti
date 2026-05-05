@@ -17,12 +17,17 @@ export interface Product {
 // Porcentaje de descuento sobre el precio al público (rate distribuidor).
 const DISTRIBUTOR_DISCOUNT_RATE = 0.20;
 
+// Canales soportados por la página /pedido*. Mantenemos la lista corta y
+// validada en BD (ver constraint products_sales_channel_check).
+export type SalesChannel = 'general' | 'caja';
+
 interface ProductRow {
   id: string;
   name: string;
   description: string | null;
   unit_price: number | string;
   active: boolean;
+  sales_channel: SalesChannel;
 }
 
 function mapRow(row: ProductRow): Product {
@@ -47,10 +52,10 @@ export interface UseProductsResult {
 }
 
 /**
- * Carga el catálogo público (sólo productos activos) ordenado por precio
- * ascendente para que las opciones más accesibles aparezcan primero.
+ * Carga el catálogo público (sólo productos activos) filtrando por canal de
+ * venta (`general` por default) y ordenado por precio ascendente.
  */
-export function useProducts(): UseProductsResult {
+export function useProducts(channel: SalesChannel = 'general'): UseProductsResult {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,8 +67,9 @@ export function useProducts(): UseProductsResult {
       setError(null);
       const { data, error: dbError } = await supabase
         .from('products')
-        .select('id, name, description, unit_price, active')
+        .select('id, name, description, unit_price, active, sales_channel')
         .eq('active', true)
+        .eq('sales_channel', channel)
         .order('unit_price', { ascending: true });
 
       if (cancelled) return;
@@ -79,7 +85,7 @@ export function useProducts(): UseProductsResult {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [channel]);
 
   return { products, loading, error };
 }

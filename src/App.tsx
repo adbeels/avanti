@@ -14,9 +14,10 @@ import { useTheme } from './hooks/useTheme';
 function App() {
   const { theme, toggleTheme } = useTheme();
   const params = new URLSearchParams(window.location.search);
-  // Normaliza pathname: quita trailing slash (excepto en root "/") para tolerar
-  // los redirects 301 que CloudFront/Amplify hacen sobre paths sin extensión.
-  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  // Normaliza pathname: quita trailing slash (excepto en root "/") y baja a
+  // lowercase para tolerar los redirects 301 de CloudFront y typos de
+  // capitalización del usuario (/PedidoCaja, /pedidoCAJA, etc.).
+  const pathname = (window.location.pathname.replace(/\/+$/, '') || '/').toLowerCase();
   const isAdmin = params.has('admin');
   const isMundial =
     params.has('distribuidor-album-mundial-2026') ||
@@ -25,6 +26,7 @@ function App() {
     pathname === '/unsubscribe' ||
     params.has('unsubscribe');
   const isPedido = pathname === '/pedido';
+  const isPedidoCaja = pathname === '/pedidocaja';
 
   if (isAdmin) {
     return <AdminApp />;
@@ -36,6 +38,10 @@ function App() {
 
   if (isPedido) {
     return <OrderPage />;
+  }
+
+  if (isPedidoCaja) {
+    return <OrderPage channel="caja" />;
   }
 
   if (isMundial) {

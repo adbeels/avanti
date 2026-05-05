@@ -6,7 +6,36 @@ import CustomerStep from './CustomerStep';
 import ProductsStep from './ProductsStep';
 import SummaryStep from './SummaryStep';
 import SuccessView from './SuccessView';
+import type { SalesChannel } from './products';
 import type { CustomerData, OrderItem, Step } from './types';
+
+interface ChannelCopy {
+  badge: string;
+  titleHighlight: string;
+  description: string;
+}
+
+// Configuración del copy mostrado por canal de venta. La página estructural es
+// la misma — sólo varían las leyendas y el badge para que el cliente sepa qué
+// está pidiendo.
+const CHANNEL_COPY: Record<SalesChannel, ChannelCopy> = {
+  general: {
+    badge: 'Album Mundial FIFA 2026',
+    titleHighlight: 'prepedido',
+    description:
+      'Productos Panini con precio preferencial de distribuidor, los precios expresados deben manejarse de manera confidencial ya que no son precios de venta al público y son excusivos para socios comerciales y amigos de Avanti México, Sales & Operations .',
+  },
+  caja: {
+    badge: 'Cajas Panini Mundial FIFA 2026',
+    titleHighlight: 'prepedido de cajas',
+    description:
+      'Cajas Panini con precio preferencial de distribuidor. Canal exclusivo para socios comerciales con punto de venta. Los precios mostrados deben manejarse de forma confidencial.',
+  },
+};
+
+interface OrderPageProps {
+  channel?: SalesChannel;
+}
 
 const emptyCustomer: CustomerData = {
   name: '',
@@ -18,7 +47,8 @@ const emptyCustomer: CustomerData = {
   notes: '',
 };
 
-export default function OrderPage() {
+export default function OrderPage({ channel = 'general' }: OrderPageProps = {}) {
+  const copy = CHANNEL_COPY[channel];
   const [step, setStep] = useState<Step>('customer');
   const [customer, setCustomer] = useState<CustomerData>(emptyCustomer);
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -124,15 +154,15 @@ export default function OrderPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 text-amber-500 text-xs font-semibold tracking-widest uppercase mb-4">
             <Shield size={11} />
-            Album Mundial FIFA 2026
+            {copy.badge}
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
             Realiza tu{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
-              prepedido
+              {copy.titleHighlight}
             </span>
           </h1>
-          <p className="text-gray-500 text-sm">Productos Panini con precio preferencial de distribuidor, los precios expresados deben manejarse de manera confidencial ya que no son precios de venta al público y son excusivos para socios comerciales y amigos de Avanti México, Sales & Operations .</p>
+          <p className="text-gray-500 text-sm">{copy.description}</p>
         </div>
 
         <StepIndicator current={step} />
@@ -153,6 +183,7 @@ export default function OrderPage() {
               onChange={setItems}
               onBack={() => setStep('customer')}
               onNext={() => setStep('summary')}
+              channel={channel}
             />
           )}
           {step === 'summary' && (

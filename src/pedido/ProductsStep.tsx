@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Minus, Plus, Package, ShoppingCart, Loader2, AlertCircle } from 'lucide-react';
-import { useProducts } from './products';
+import { useProducts, type SalesChannel } from './products';
 import type { OrderItem } from './types';
 
 interface ProductsStepProps {
@@ -7,14 +7,15 @@ interface ProductsStepProps {
   onChange: (items: OrderItem[]) => void;
   onBack: () => void;
   onNext: () => void;
+  channel?: SalesChannel;
 }
 
 function formatMXN(n: number): string {
   return n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
 }
 
-export default function ProductsStep({ items, onChange, onBack, onNext }: ProductsStepProps) {
-  const { products, loading, error } = useProducts();
+export default function ProductsStep({ items, onChange, onBack, onNext, channel = 'general' }: ProductsStepProps) {
+  const { products, loading, error } = useProducts(channel);
 
   function getQty(productId: string): number {
     return items.find((i) => i.productId === productId)?.quantity ?? 0;
