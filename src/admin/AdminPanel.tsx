@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   LogOut, ShieldCheck, Mail, Package, Truck, ShoppingBag, Inbox, Boxes, Tag,
   ClipboardList, FileSignature, Menu, X, ChevronRight, User as UserIcon, History,
-  Users as UsersIcon, MailCheck,
+  Users as UsersIcon, MailCheck, ArrowLeft,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ContactsTable from './ContactsTable';
@@ -393,80 +393,158 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         </header>
 
         <main className="flex-1 px-4 md:px-6 lg:px-8 py-6 md:py-8 max-w-[1600px] w-full">
-        {tab === 'preorders' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Gestion de Prepedidos</h1>
-              <p className="text-gray-600 text-sm">
-                Administra los prepedidos, cambia su estado y envia correos de confirmación con solicitud de pago.
-              </p>
-            </div>
-            <PreordersDashboard preorders={preorders} />
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
-                <PreordersTable
-                  onSelectPreorder={(p) => { setSelectedPreorder(p); setShowExternalOrderForm(false); setShowBulkOrderImport(false); }}
-                  selectedId={selectedPreorder?.id || null}
-                  onPreordersChange={setPreorders}
-                  onCreateExternal={isAdmin ? () => { setShowExternalOrderForm(true); setShowBulkOrderImport(false); setSelectedPreorder(null); } : undefined}
-                  onBulkImport={isAdmin ? () => { setShowBulkOrderImport(true); setShowExternalOrderForm(false); setSelectedPreorder(null); } : undefined}
-                  refreshKey={preordersRefreshKey}
-                />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                {showBulkOrderImport ? (
-                  <BulkOrderImport
-                    isAdmin={isAdmin}
-                    onClose={() => setShowBulkOrderImport(false)}
-                    onImported={() => setPreordersRefreshKey((k) => k + 1)}
-                  />
-                ) : showExternalOrderForm ? (
-                  <ExternalOrderForm
-                    isAdmin={isAdmin}
-                    onClose={() => setShowExternalOrderForm(false)}
-                    onCreated={() => setPreordersRefreshKey((k) => k + 1)}
-                  />
-                ) : (
-                  <>
+        {tab === 'preorders' && (() => {
+          // ─────────────────────────────────────────────────────────────
+          // Drill-down UX: cuando hay un pedido seleccionado (o se abrió
+          // el form de creación / bulk import), ocultamos la lista y
+          // mostramos sólo la vista detalle a ancho completo. El botón
+          // "Volver a pedidos" regresa al modo lista.
+          // ─────────────────────────────────────────────────────────────
+          const inDetailMode =
+            selectedPreorder !== null || showExternalOrderForm || showBulkOrderImport;
+
+          const exitDetailMode = () => {
+            setSelectedPreorder(null);
+            setShowExternalOrderForm(false);
+            setShowBulkOrderImport(false);
+          };
+
+          return (
+            <>
+              {/* Header de sección — sólo en modo lista */}
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Gestion de Prepedidos</h1>
+                  <p className="text-gray-600 text-sm">
+                    Administra los prepedidos, cambia su estado y envia correos de confirmación con solicitud de pago.
+                  </p>
+                </div>
+              )}
+
+              {!inDetailMode ? (
+                /* ─── MODO LISTA ─── */
+                <>
+                  <PreordersDashboard preorders={preorders} />
+                  <div className="space-y-6 mt-6">
                     <AutoSendConfig />
-                    <PreorderMailer
-                      preorder={selectedPreorder}
-                      onEmailSent={handleEmailSent}
+                    <PreordersTable
+                      onSelectPreorder={(p) => { setSelectedPreorder(p); setShowExternalOrderForm(false); setShowBulkOrderImport(false); }}
+                      selectedId={null}
+                      onPreordersChange={setPreorders}
+                      onCreateExternal={isAdmin ? () => { setShowExternalOrderForm(true); setShowBulkOrderImport(false); setSelectedPreorder(null); } : undefined}
+                      onBulkImport={isAdmin ? () => { setShowBulkOrderImport(true); setShowExternalOrderForm(false); setSelectedPreorder(null); } : undefined}
+                      refreshKey={preordersRefreshKey}
                     />
-                    <PaymentConfirmationMailer
-                      preorder={selectedPreorder}
-                      onEmailSent={handleConfirmationSent}
+                  </div>
+                </>
+              ) : (
+                /* ─── MODO DETALLE ─── */
+                <div className="max-w-3xl mx-auto space-y-6">
+                  {/* Back button + header del pedido */}
+                  <div className="flex items-center gap-3 sticky top-14 z-10 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 py-3 bg-black/90 backdrop-blur border-b border-gray-900">
+                    <button
+                      onClick={exitDetailMode}
+                      className="flex items-center gap-1.5 text-gray-400 hover:text-amber-400 text-sm font-medium transition-colors px-3 py-1.5 rounded-lg border border-gray-800 hover:border-amber-500/40 bg-black"
+                    >
+                      <ArrowLeft size={14} />
+                      Volver a pedidos
+                    </button>
+                    {selectedPreorder && (
+                      <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-amber-400 text-xs font-bold tracking-widest bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex-shrink-0">
+                          {selectedPreorder.folio || selectedPreorder.legacy_order_number || selectedPreorder.order_number}
+                        </span>
+                        <span className="text-white text-sm font-medium truncate">{selectedPreorder.name}</span>
+                        {selectedPreorder.company && (
+                          <span className="text-gray-500 text-xs truncate hidden sm:inline">· {selectedPreorder.company}</span>
+                        )}
+                      </div>
+                    )}
+                    {showExternalOrderForm && !selectedPreorder && (
+                      <span className="text-white text-sm font-semibold">Nuevo pedido externo</span>
+                    )}
+                    {showBulkOrderImport && !selectedPreorder && (
+                      <span className="text-white text-sm font-semibold">Importación masiva</span>
+                    )}
+                  </div>
+
+                  {/* Contenido del modo detalle */}
+                  {showBulkOrderImport ? (
+                    <BulkOrderImport
+                      isAdmin={isAdmin}
+                      onClose={() => setShowBulkOrderImport(false)}
+                      onImported={() => setPreordersRefreshKey((k) => k + 1)}
                     />
-                  </>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+                  ) : showExternalOrderForm ? (
+                    <ExternalOrderForm
+                      isAdmin={isAdmin}
+                      onClose={() => setShowExternalOrderForm(false)}
+                      onCreated={() => setPreordersRefreshKey((k) => k + 1)}
+                    />
+                  ) : (
+                    <>
+                      <PreorderMailer
+                        preorder={selectedPreorder}
+                        onEmailSent={handleEmailSent}
+                      />
+                      <PaymentConfirmationMailer
+                        preorder={selectedPreorder}
+                        onEmailSent={handleConfirmationSent}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {tab === 'deliveries' && (
           <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Organizaci&oacute;n de Entregas</h1>
-              <p className="text-gray-600 text-sm">
-                Pedidos confirmados listos para entregar. Marca cada uno como listo (env&iacute;a aviso al cliente) y luego como entregado al confirmar la recepci&oacute;n.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
-                <DeliveriesTable
-                  onSelectPreorder={setSelectedDelivery}
-                  selectedId={selectedDelivery?.id || null}
-                  refreshKey={deliveriesRefreshKey}
-                />
+            {!selectedDelivery && (
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-white mb-1">Organizaci&oacute;n de Entregas</h1>
+                <p className="text-gray-600 text-sm">
+                  Pedidos confirmados listos para entregar. Marca cada uno como listo (env&iacute;a aviso al cliente) y luego como entregado al confirmar la recepci&oacute;n.
+                </p>
               </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
+            )}
+
+            {!selectedDelivery ? (
+              /* ─── MODO LISTA ─── */
+              <DeliveriesTable
+                onSelectPreorder={setSelectedDelivery}
+                selectedId={null}
+                refreshKey={deliveriesRefreshKey}
+              />
+            ) : (
+              /* ─── MODO DETALLE ─── */
+              <div className="max-w-3xl mx-auto space-y-6">
+                <div className="flex items-center gap-3 sticky top-14 z-10 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 py-3 bg-black/90 backdrop-blur border-b border-gray-900">
+                  <button
+                    onClick={() => setSelectedDelivery(null)}
+                    className="flex items-center gap-1.5 text-gray-400 hover:text-amber-400 text-sm font-medium transition-colors px-3 py-1.5 rounded-lg border border-gray-800 hover:border-amber-500/40 bg-black"
+                  >
+                    <ArrowLeft size={14} />
+                    Volver a entregas
+                  </button>
+                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-amber-400 text-xs font-bold tracking-widest bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex-shrink-0">
+                      {selectedDelivery.folio || selectedDelivery.legacy_order_number || selectedDelivery.order_number}
+                    </span>
+                    <span className="text-white text-sm font-medium truncate">{selectedDelivery.name}</span>
+                    {selectedDelivery.company && (
+                      <span className="text-gray-500 text-xs truncate hidden sm:inline">· {selectedDelivery.company}</span>
+                    )}
+                  </div>
+                </div>
+
                 <DeliveryReadyMailer
                   preorder={selectedDelivery}
                   onEmailSent={handleDeliveryReadySent}
                 />
               </div>
-            </div>
+            )}
           </>
         )}
 
