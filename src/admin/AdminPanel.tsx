@@ -40,6 +40,46 @@ interface AdminPanelProps {
   onLogout: () => void;
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// DetailHeader — header sticky con botón "Volver" usado en el modo detalle
+// drill-down de todos los tabs (preorders, deliveries, purchases, etc.).
+// Extrae el patrón visual común para mantener la UI consistente.
+// ──────────────────────────────────────────────────────────────────────────
+interface DetailHeaderProps {
+  onBack: () => void;
+  backLabel: string;
+  badge?: string | null;          // folio / SKU monospace en pill ámbar
+  title?: string | null;          // nombre / supplier / etc.
+  subtitle?: string | null;       // empresa / fecha / etc. (opcional)
+}
+
+function DetailHeader({ onBack, backLabel, badge, title, subtitle }: DetailHeaderProps) {
+  return (
+    <div className="flex items-center gap-3 sticky top-14 z-10 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 py-3 bg-black/90 backdrop-blur border-b border-gray-900">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-gray-400 hover:text-amber-400 text-sm font-medium transition-colors px-3 py-1.5 rounded-lg border border-gray-800 hover:border-amber-500/40 bg-black flex-shrink-0"
+      >
+        <ArrowLeft size={14} />
+        {backLabel}
+      </button>
+      {(badge || title || subtitle) && (
+        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+          {badge && (
+            <span className="font-mono text-amber-400 text-xs font-bold tracking-widest bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex-shrink-0">
+              {badge}
+            </span>
+          )}
+          {title && <span className="text-white text-sm font-medium truncate">{title}</span>}
+          {subtitle && (
+            <span className="text-gray-500 text-xs truncate hidden sm:inline">· {subtitle}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type Tab = 'mailing' | 'preorders' | 'deliveries' | 'purchases' | 'receptions' | 'inventory' | 'catalog' | 'picking' | 'delivery_docs' | 'audit' | 'users' | 'email_templates';
 type POMode = 'empty' | 'create' | 'edit';
 type RecMode = 'empty' | 'pick_po' | 'edit';
@@ -440,33 +480,16 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               ) : (
                 /* ─── MODO DETALLE ─── */
                 <div className="max-w-3xl mx-auto space-y-6">
-                  {/* Back button + header del pedido */}
-                  <div className="flex items-center gap-3 sticky top-14 z-10 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 py-3 bg-black/90 backdrop-blur border-b border-gray-900">
-                    <button
-                      onClick={exitDetailMode}
-                      className="flex items-center gap-1.5 text-gray-400 hover:text-amber-400 text-sm font-medium transition-colors px-3 py-1.5 rounded-lg border border-gray-800 hover:border-amber-500/40 bg-black"
-                    >
-                      <ArrowLeft size={14} />
-                      Volver a pedidos
-                    </button>
-                    {selectedPreorder && (
-                      <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-amber-400 text-xs font-bold tracking-widest bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex-shrink-0">
-                          {selectedPreorder.folio || selectedPreorder.legacy_order_number || selectedPreorder.order_number}
-                        </span>
-                        <span className="text-white text-sm font-medium truncate">{selectedPreorder.name}</span>
-                        {selectedPreorder.company && (
-                          <span className="text-gray-500 text-xs truncate hidden sm:inline">· {selectedPreorder.company}</span>
-                        )}
-                      </div>
-                    )}
-                    {showExternalOrderForm && !selectedPreorder && (
-                      <span className="text-white text-sm font-semibold">Nuevo pedido externo</span>
-                    )}
-                    {showBulkOrderImport && !selectedPreorder && (
-                      <span className="text-white text-sm font-semibold">Importación masiva</span>
-                    )}
-                  </div>
+                  <DetailHeader
+                    onBack={exitDetailMode}
+                    backLabel="Volver a pedidos"
+                    badge={selectedPreorder ? (selectedPreorder.folio || selectedPreorder.legacy_order_number || selectedPreorder.order_number) : null}
+                    title={
+                      selectedPreorder?.name ??
+                      (showExternalOrderForm ? 'Nuevo pedido externo' : showBulkOrderImport ? 'Importación masiva' : null)
+                    }
+                    subtitle={selectedPreorder?.company || null}
+                  />
 
                   {/* Contenido del modo detalle */}
                   {showBulkOrderImport ? (
@@ -520,24 +543,13 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             ) : (
               /* ─── MODO DETALLE ─── */
               <div className="max-w-3xl mx-auto space-y-6">
-                <div className="flex items-center gap-3 sticky top-14 z-10 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 py-3 bg-black/90 backdrop-blur border-b border-gray-900">
-                  <button
-                    onClick={() => setSelectedDelivery(null)}
-                    className="flex items-center gap-1.5 text-gray-400 hover:text-amber-400 text-sm font-medium transition-colors px-3 py-1.5 rounded-lg border border-gray-800 hover:border-amber-500/40 bg-black"
-                  >
-                    <ArrowLeft size={14} />
-                    Volver a entregas
-                  </button>
-                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-amber-400 text-xs font-bold tracking-widest bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex-shrink-0">
-                      {selectedDelivery.folio || selectedDelivery.legacy_order_number || selectedDelivery.order_number}
-                    </span>
-                    <span className="text-white text-sm font-medium truncate">{selectedDelivery.name}</span>
-                    {selectedDelivery.company && (
-                      <span className="text-gray-500 text-xs truncate hidden sm:inline">· {selectedDelivery.company}</span>
-                    )}
-                  </div>
-                </div>
+                <DetailHeader
+                  onBack={() => setSelectedDelivery(null)}
+                  backLabel="Volver a entregas"
+                  badge={selectedDelivery.folio || selectedDelivery.legacy_order_number || selectedDelivery.order_number}
+                  title={selectedDelivery.name}
+                  subtitle={selectedDelivery.company || null}
+                />
 
                 <DeliveryReadyMailer
                   preorder={selectedDelivery}
@@ -548,196 +560,293 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           </>
         )}
 
-        {tab === 'purchases' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Abastecimiento &mdash; &Oacute;rdenes de Compra</h1>
-              <p className="text-gray-600 text-sm">
-                Registra lo que se compra a Panini y otros proveedores. Al recibirse el producto, el almacenista cierra la recepci&oacute;n y el stock sube autom&aacute;ticamente.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'purchases' && (() => {
+          const inDetailMode = selectedPO !== null || poMode !== 'empty' || showBulkPOImport;
+          const exitDetailMode = () => {
+            setSelectedPO(null);
+            setPOMode('empty');
+            setShowBulkPOImport(false);
+          };
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Abastecimiento &mdash; &Oacute;rdenes de Compra</h1>
+                  <p className="text-gray-600 text-sm">
+                    Registra lo que se compra a Panini y otros proveedores. Al recibirse el producto, el almacenista cierra la recepci&oacute;n y el stock sube autom&aacute;ticamente.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <PurchaseOrdersTable
                   onSelectPO={(po) => { handlePOSelect(po); setShowBulkPOImport(false); }}
-                  selectedId={selectedPO?.id || null}
+                  selectedId={null}
                   onCreateNew={() => { handlePOCreateNew(); setShowBulkPOImport(false); }}
                   onImportCSV={isAdmin ? () => { setShowBulkPOImport(true); setSelectedPO(null); setPOMode('empty'); } : undefined}
                   refreshKey={poRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                {showBulkPOImport ? (
-                  <BulkPOImport
-                    isAdmin={isAdmin}
-                    onClose={() => setShowBulkPOImport(false)}
-                    onImported={() => setPORefreshKey((k) => k + 1)}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={exitDetailMode}
+                    backLabel="Volver a órdenes de compra"
+                    badge={selectedPO?.folio ?? null}
+                    title={
+                      selectedPO?.supplier ??
+                      (showBulkPOImport ? 'Importación masiva de POs' : poMode === 'create' ? 'Nueva orden de compra' : null)
+                    }
+                    subtitle={selectedPO?.status ?? null}
                   />
-                ) : (
-                  <PurchaseOrderEditor
-                    selectedPO={selectedPO}
-                    mode={poMode}
-                    onModeChange={setPOMode}
-                    onSelectPO={setSelectedPO}
-                    onChanged={handlePOChanged}
-                    isAdmin={isAdmin}
-                  />
-                )}
-              </div>
-            </div>
-          </>
-        )}
+                  {showBulkPOImport ? (
+                    <BulkPOImport
+                      isAdmin={isAdmin}
+                      onClose={() => setShowBulkPOImport(false)}
+                      onImported={() => setPORefreshKey((k) => k + 1)}
+                    />
+                  ) : (
+                    <PurchaseOrderEditor
+                      selectedPO={selectedPO}
+                      mode={poMode}
+                      onModeChange={setPOMode}
+                      onSelectPO={setSelectedPO}
+                      onChanged={handlePOChanged}
+                      isAdmin={isAdmin}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
-        {tab === 'receptions' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Recepci&oacute;n de Mercader&iacute;a</h1>
-              <p className="text-gray-600 text-sm">
-                Registra lo que llega f&iacute;sicamente. Al cerrar la recepci&oacute;n, el sistema sube el stock autom&aacute;ticamente y actualiza el estado de la PO.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'receptions' && (() => {
+          const inDetailMode = selectedReception !== null || recMode !== 'empty';
+          const exitDetailMode = () => {
+            setSelectedReception(null);
+            setRecMode('empty');
+          };
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Recepci&oacute;n de Mercader&iacute;a</h1>
+                  <p className="text-gray-600 text-sm">
+                    Registra lo que llega f&iacute;sicamente. Al cerrar la recepci&oacute;n, el sistema sube el stock autom&aacute;ticamente y actualiza el estado de la PO.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <ReceptionsTable
                   onSelectReception={handleReceptionSelect}
-                  selectedId={selectedReception?.id || null}
+                  selectedId={null}
                   onCreateNew={handleReceptionCreateNew}
                   refreshKey={recRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <ReceptionEditor
-                  selectedReception={selectedReception}
-                  mode={recMode}
-                  onModeChange={setRecMode}
-                  onSelectReception={setSelectedReception}
-                  onChanged={handleReceptionChanged}
-                  canWrite={canManageReceptions}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={exitDetailMode}
+                    backLabel="Volver a recepciones"
+                    badge={selectedReception?.folio ?? null}
+                    title={
+                      selectedReception
+                        ? `Recepción ${selectedReception.status}`
+                        : recMode === 'pick_po' ? 'Nueva recepción' : null
+                    }
+                    subtitle={selectedReception?.received_at ? new Date(selectedReception.received_at).toLocaleDateString('es-MX') : null}
+                  />
+                  <ReceptionEditor
+                    selectedReception={selectedReception}
+                    mode={recMode}
+                    onModeChange={setRecMode}
+                    onSelectReception={setSelectedReception}
+                    onChanged={handleReceptionChanged}
+                    canWrite={canManageReceptions}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
-        {tab === 'inventory' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Inventario</h1>
-              <p className="text-gray-600 text-sm">
-                Stock en tiempo real por almac&eacute;n. Cualquier cambio queda registrado en el kardex y respeta los invariantes (no negativo, no sobre-reservar).
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'inventory' && (() => {
+          const inDetailMode = selectedStockRow !== null;
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Inventario</h1>
+                  <p className="text-gray-600 text-sm">
+                    Stock en tiempo real por almac&eacute;n. Cualquier cambio queda registrado en el kardex y respeta los invariantes (no negativo, no sobre-reservar).
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <StockTable
-                  selectedKey={selectedStockRow ? `${selectedStockRow.product_id}:${selectedStockRow.warehouse_id}` : null}
+                  selectedKey={null}
                   onSelectRow={setSelectedStockRow}
                   refreshKey={stockRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <InventoryEditor
-                  selectedRow={selectedStockRow}
-                  canWrite={canManageInventory}
-                  onChanged={handleInventoryChanged}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={() => setSelectedStockRow(null)}
+                    backLabel="Volver a inventario"
+                    badge={selectedStockRow!.product_sku}
+                    title={selectedStockRow!.product_name}
+                    subtitle={selectedStockRow!.warehouse_code}
+                  />
+                  <InventoryEditor
+                    selectedRow={selectedStockRow}
+                    canWrite={canManageInventory}
+                    onChanged={handleInventoryChanged}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
-        {tab === 'catalog' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Cat&aacute;logo de Productos</h1>
-              <p className="text-gray-600 text-sm">
-                Maestro de SKUs. Solo admin puede crear, editar y desactivar. Los productos desactivados no aparecen en POs nuevas pero los registros hist&oacute;ricos se conservan intactos.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'catalog' && (() => {
+          const inDetailMode = selectedProduct !== null || productMode !== 'empty';
+          const exitDetailMode = () => {
+            setSelectedProduct(null);
+            setProductMode('empty');
+          };
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Cat&aacute;logo de Productos</h1>
+                  <p className="text-gray-600 text-sm">
+                    Maestro de SKUs. Solo admin puede crear, editar y desactivar. Los productos desactivados no aparecen en POs nuevas pero los registros hist&oacute;ricos se conservan intactos.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <ProductsTable
-                  selectedId={selectedProduct?.id || null}
+                  selectedId={null}
                   onSelect={handleProductSelect}
                   onCreateNew={handleProductCreateNew}
                   refreshKey={productRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <ProductEditor
-                  selected={selectedProduct}
-                  mode={productMode}
-                  onModeChange={setProductMode}
-                  onSelect={setSelectedProduct}
-                  onChanged={handleProductChanged}
-                  isAdmin={isAdmin}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={exitDetailMode}
+                    backLabel="Volver al catálogo"
+                    badge={selectedProduct?.sku ?? null}
+                    title={selectedProduct?.name ?? (productMode === 'create' ? 'Nuevo producto' : null)}
+                    subtitle={selectedProduct?.active === false ? 'Inactivo' : null}
+                  />
+                  <ProductEditor
+                    selected={selectedProduct}
+                    mode={productMode}
+                    onModeChange={setProductMode}
+                    onSelect={setSelectedProduct}
+                    onChanged={handleProductChanged}
+                    isAdmin={isAdmin}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
-        {tab === 'picking' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Picking &mdash; Listas de Surtido</h1>
-              <p className="text-gray-600 text-sm">
-                Genera y ejecuta listas de surtido contra pedidos confirmados. Al cerrar, se libera la reserva, se descuenta stock y el pedido pasa a <strong>preparando</strong> o <strong>listo</strong>.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'picking' && (() => {
+          const inDetailMode = selectedPicking !== null || pickingMode !== 'empty';
+          const exitDetailMode = () => {
+            setSelectedPicking(null);
+            setPickingMode('empty');
+          };
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Picking &mdash; Listas de Surtido</h1>
+                  <p className="text-gray-600 text-sm">
+                    Genera y ejecuta listas de surtido contra pedidos confirmados. Al cerrar, se libera la reserva, se descuenta stock y el pedido pasa a <strong>preparando</strong> o <strong>listo</strong>.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <PickingListsTable
-                  selectedId={selectedPicking?.id || null}
+                  selectedId={null}
                   onSelect={handlePickingSelect}
                   onCreateNew={handlePickingCreateNew}
                   refreshKey={pickingRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <PickingListEditor
-                  selected={selectedPicking}
-                  mode={pickingMode}
-                  onModeChange={setPickingMode}
-                  onSelect={setSelectedPicking}
-                  onChanged={handlePickingChanged}
-                  canWrite={canManagePicking}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={exitDetailMode}
+                    backLabel="Volver a picking"
+                    badge={selectedPicking?.folio ?? null}
+                    title={
+                      selectedPicking ? `Picking de ${selectedPicking.order_id?.slice(0, 8) ?? 'pedido'}` :
+                      pickingMode === 'pick_order' ? 'Nueva picking' : null
+                    }
+                    subtitle={selectedPicking?.status ?? null}
+                  />
+                  <PickingListEditor
+                    selected={selectedPicking}
+                    mode={pickingMode}
+                    onModeChange={setPickingMode}
+                    onSelect={setSelectedPicking}
+                    onChanged={handlePickingChanged}
+                    canWrite={canManagePicking}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
-        {tab === 'delivery_docs' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Documentos de Entrega</h1>
-              <p className="text-gray-600 text-sm">
-                Generaci&oacute;n del comprobante de salida con firma del receptor (touch screen). Al firmar, el pedido transita a <strong>entregado</strong> autom&aacute;ticamente.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'delivery_docs' && (() => {
+          const inDetailMode = selectedDeliveryDoc !== null || ddMode !== 'empty';
+          const exitDetailMode = () => {
+            setSelectedDeliveryDoc(null);
+            setDDMode('empty');
+          };
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Documentos de Entrega</h1>
+                  <p className="text-gray-600 text-sm">
+                    Generaci&oacute;n del comprobante de salida con firma del receptor (touch screen). Al firmar, el pedido transita a <strong>entregado</strong> autom&aacute;ticamente.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <DeliveryDocumentsTable
-                  selectedId={selectedDeliveryDoc?.id || null}
+                  selectedId={null}
                   onSelect={handleDDSelect}
                   onCreateNew={handleDDCreateNew}
                   refreshKey={ddRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <DeliveryDocumentEditor
-                  selected={selectedDeliveryDoc}
-                  mode={ddMode}
-                  onModeChange={setDDMode}
-                  onSelect={setSelectedDeliveryDoc}
-                  onChanged={handleDDChanged}
-                  canWrite={canManageDelivery}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={exitDetailMode}
+                    backLabel="Volver a documentos de entrega"
+                    badge={selectedDeliveryDoc?.folio ?? null}
+                    title={selectedDeliveryDoc?.receiver_name ?? (ddMode === 'pick_order' ? 'Nuevo documento de entrega' : null)}
+                    subtitle={selectedDeliveryDoc?.status ?? null}
+                  />
+                  <DeliveryDocumentEditor
+                    selected={selectedDeliveryDoc}
+                    mode={ddMode}
+                    onModeChange={setDDMode}
+                    onSelect={setSelectedDeliveryDoc}
+                    onChanged={handleDDChanged}
+                    canWrite={canManageDelivery}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {tab === 'email_templates' && (
           <>
@@ -751,56 +860,78 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           </>
         )}
 
-        {tab === 'users' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Usuarios &amp; Roles</h1>
-              <p className="text-gray-600 text-sm">
-                Gesti&oacute;n de usuarios del sistema. Solo <strong className="text-amber-400">admin</strong> puede asignar roles. Los nuevos usuarios aparecen autom&aacute;ticamente como <strong className="text-gray-400">Pendiente</strong> al registrarse y deben recibir un rol antes de poder operar.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'users' && (() => {
+          const inDetailMode = selectedUserProfile !== null;
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Usuarios &amp; Roles</h1>
+                  <p className="text-gray-600 text-sm">
+                    Gesti&oacute;n de usuarios del sistema. Solo <strong className="text-amber-400">admin</strong> puede asignar roles. Los nuevos usuarios aparecen autom&aacute;ticamente como <strong className="text-gray-400">Pendiente</strong> al registrarse y deben recibir un rol antes de poder operar.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <UsersTable
-                  selectedId={selectedUserProfile?.user_id ?? null}
+                  selectedId={null}
                   onSelect={setSelectedUserProfile}
                   refreshKey={usersRefreshKey}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <UserEditor
-                  selected={selectedUserProfile}
-                  isAdmin={isAdmin}
-                  currentUserId={currentUserId}
-                  onChanged={() => setUsersRefreshKey((k) => k + 1)}
-                  onClose={() => setSelectedUserProfile(null)}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={() => setSelectedUserProfile(null)}
+                    backLabel="Volver a usuarios"
+                    badge={selectedUserProfile!.role ?? 'pending'}
+                    title={selectedUserProfile!.full_name ?? selectedUserProfile!.user_id.slice(0, 8)}
+                    subtitle={selectedUserProfile!.active === false ? 'Inactivo' : null}
+                  />
+                  <UserEditor
+                    selected={selectedUserProfile}
+                    isAdmin={isAdmin}
+                    currentUserId={currentUserId}
+                    onChanged={() => setUsersRefreshKey((k) => k + 1)}
+                    onClose={() => setSelectedUserProfile(null)}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
-        {tab === 'audit' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-1">Auditor&iacute;a</h1>
-              <p className="text-gray-600 text-sm">
-                Bit&aacute;cora append-only de todos los cambios en tablas cr&iacute;ticas. Cada registro guarda qui&eacute;n, qu&eacute;, cu&aacute;ndo y el diff completo del cambio.
-              </p>
-            </div>
-            <div className="grid 2xl:grid-cols-3 gap-6 items-start">
-              <div className="2xl:col-span-2 min-w-0">
+        {tab === 'audit' && (() => {
+          const inDetailMode = selectedAuditEntry !== null;
+          return (
+            <>
+              {!inDetailMode && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-white mb-1">Auditor&iacute;a</h1>
+                  <p className="text-gray-600 text-sm">
+                    Bit&aacute;cora append-only de todos los cambios en tablas cr&iacute;ticas. Cada registro guarda qui&eacute;n, qu&eacute;, cu&aacute;ndo y el diff completo del cambio.
+                  </p>
+                </div>
+              )}
+              {!inDetailMode ? (
                 <AuditLogTable
-                  selectedId={selectedAuditEntry?.id ?? null}
+                  selectedId={null}
                   onSelect={setSelectedAuditEntry}
                 />
-              </div>
-              <div className="2xl:col-span-1 2xl:sticky 2xl:top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-6 pr-1 pb-8">
-                <AuditLogDetail entry={selectedAuditEntry} />
-              </div>
-            </div>
-          </>
-        )}
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <DetailHeader
+                    onBack={() => setSelectedAuditEntry(null)}
+                    backLabel="Volver al log"
+                    badge={selectedAuditEntry!.action}
+                    title={selectedAuditEntry!.entity_type}
+                    subtitle={new Date(selectedAuditEntry!.created_at).toLocaleString('es-MX')}
+                  />
+                  <AuditLogDetail entry={selectedAuditEntry} />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {tab === 'mailing' && (
           <>
